@@ -54,7 +54,9 @@ We are looking to improve the scalability and reliability of this tool through t
 
 1.  **Import Workflow:** Import the `.json` workflow file into your n8n instance.
 2.  **Configure API:** Update the IOT Hub API Tool nodes with your specific endpoint details.
-3.  **AI Integration:** Map this workflow as a tool in your AI Agent (e.g., LangChain or OpenAI Assistant) using the expected input parameters.
+3.  **AI Integration:** Map this workflow as a tool in your AI Agent (in N8N) using the expected input parameters.
 
 ---
-*Created as part of an automated IOT visualization solution.*
+## Screenshot of the workflow
+<img width="998" height="756" alt="image" src="https://github.com/user-attachments/assets/1ab11da2-8fd5-4b07-854e-b0442be9950c" />
+
