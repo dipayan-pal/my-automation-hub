@@ -1,0 +1,876 @@
+{
+  "name": "graph-plot-tool",
+  "nodes": [
+    {
+      "parameters": {
+        "fieldToSplitOut": "temperature",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        320,
+        16
+      ],
+      "id": "d43b074e-9ad6-4ec4-8841-266825f4dc8b",
+      "name": "temperature"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. Get all items from the previous node\nconst items = $input.all();\n\n// 2. Extract temperature values and generate labels (Reading 1, Reading 2...)\nconst temperatures = items.map(item => item.json.temperature);\nconst labels = items.map((_, index) => `Reading ${index + 1}`);\n\n// 3. Define the Chart.js configuration\nconst chartConfig = {\n  type: 'bar',\n  data: {\n    labels: labels,\n    datasets: [\n      {\n        label: 'Temperature',\n        backgroundColor: 'rgba(54, 162, 235, 0.5)',\n        borderColor: 'rgb(54, 162, 235)',\n        borderWidth: 1,\n        data: temperatures,\n      }\n    ],\n  },\n  options: {\n    title: {\n      display: true,\n      text: 'Temperature Readings',\n    },\n  },\n};\n\n// 4. Stringify and URL-encode the configuration for the 'c' parameter\nconst encodedConfig = encodeURIComponent(JSON.stringify(chartConfig));\n\n// 5. Construct the final Image URL\nconst chartUrl = `https://quickchart.io/chart?c=${encodedConfig}`;\n\n// Return as a single item\nreturn {\n  url: chartUrl\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        496,
+        16
+      ],
+      "id": "5b0186ee-3e83-4fa8-9b19-a1c32b96a59d",
+      "name": "Bar graph"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.type }}",
+                    "rightValue": "bar",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "1fe56ec2-a7bb-450f-9670-11066c8e999d"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Bar"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "7b9fc953-b95d-4825-b80f-25ec5b0f0377",
+                    "leftValue": "={{ $json.type }}",
+                    "rightValue": "line",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Line"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "c91f7ce7-d3bf-4d34-97df-f2a8b3f1a606",
+                    "leftValue": "={{ $json.type }}",
+                    "rightValue": "instrument",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "instrument"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "572a30eb-866c-443e-b0bf-19ac62648ccb",
+                    "leftValue": "={{ $json.type }}",
+                    "rightValue": "temperature",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "temperature"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -320,
+        368
+      ],
+      "id": "adfe6367-8b2e-4a37-9f54-938a80180048",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "numberInputs": 4
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1008,
+        368
+      ],
+      "id": "6ae0a66d-4e4b-46cc-896f-1265fa6c35a9",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "type"
+            },
+            {
+              "name": "instrument-id"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -560,
+        576
+      ],
+      "id": "eaacd912-d81b-4342-b814-e2f0b761e80e",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -544,
+        368
+      ],
+      "id": "ef24c991-b815-4d9b-a0e5-f58bc4b59db7",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "instrument_temp",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        320,
+        688
+      ],
+      "id": "f8bb8383-e695-4fad-9aab-033ccf499c41",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. Get all items from the previous node\nconst items = $input.all();\n\n// 2. Extract values - keeping Math.abs for the doughnut rendering\nconst temperatures = items.map(item => Math.abs(item.json.instrument_temp || 0));\n\n// 3. Define labels\nconst labels = [\"F-Motor\", \"B-Motor\", \"Alt-Motor\", \"Rear-Piston\"];\n\n// 4. Construct the configuration\nconst chartConfig = {\n  type: 'doughnut',\n  data: {\n    labels: labels,\n    datasets: [\n      {\n        data: temperatures,\n        backgroundColor: [\n          'rgb(255, 99, 132)', \n          'rgb(255, 159, 64)', \n          'rgb(255, 205, 86)', \n          'rgb(75, 192, 192)'\n        ]\n      }\n    ]\n  },\n  options: {\n    title: {\n      display: true,\n      // PASSING AN ARRAY CREATES MULTIPLE LINES\n      text: ['Instrument Temperature', 'Temperatures are in degC'],\n      fontSize: 16,\n      fontColor: '#666',\n      padding: 20\n    },\n    plugins: {\n      datalabels: {\n        display: true,\n        color: '#666',\n        font: {\n          weight: 'bold',\n          size: 14\n        }\n      }\n    }\n  }\n};\n\n// 5. Encode and return the URL\nconst encodedConfig = encodeURIComponent(JSON.stringify(chartConfig));\n\nreturn {\n  url: `https://quickchart.io/chart?c=${encodedConfig}`\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        464,
+        688
+      ],
+      "id": "d875da46-6ab2-4366-9c9e-b09a291f85ce",
+      "name": "Doughnut graph"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. Get all items\nconst items = $input.all();\n\n// 2. Extract arrays from the FIRST item (index 0)\n// This assumes your input is: [{\"temperature\": [...], \"sample_time\": [...]}]\nconst temperatures = items[0].json.temperature;\nconst sampleTimes = items[0].json.sample_time;\n\n// 3. Construct the Line Chart configuration\nconst chartConfig = {\n  type: 'line',\n  data: {\n    labels: sampleTimes, \n    datasets: [\n      {\n        label: 'Temperature',\n        backgroundColor: 'rgba(255, 99, 132, 0.5)',\n        borderColor: 'rgb(255, 99, 132)',\n        data: temperatures,\n        fill: false,\n      }\n    ],\n  },\n  options: {\n    title: {\n      display: true,\n      text: 'Temperature Over Time',\n    },\n  },\n};\n\n// 4. Stringify and URL-encode\nconst encodedConfig = encodeURIComponent(JSON.stringify(chartConfig));\n\n// 5. Return the URL\nreturn {\n  url: `https://quickchart.io/chart?c=${encodedConfig}`\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        432,
+        368
+      ],
+      "id": "fd091b00-5b0e-4bfc-876b-76b545e4e7fa",
+      "name": "Line Graph"
+    },
+    {
+      "parameters": {
+        "content": "## **All sensor reading for a single Instrument:**\n- Displayed as a pie-chart\n",
+        "height": 368,
+        "width": 768,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        64,
+        624
+      ],
+      "id": "2e988eeb-8df2-42d3-addb-cbd01f3e93d6",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "url": "https://sample-n8n.free.beeceptor.com/get-data",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        176,
+        384
+      ],
+      "id": "3a7cc54a-4229-4f58-9c2c-f617f561410c",
+      "name": "Data for Line Graph",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "url": "https://sample-n8n.free.beeceptor.com/get-data",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        128,
+        112
+      ],
+      "id": "5353ca31-455f-4aba-81fa-1abb128dde8e",
+      "name": "Data for Bar Graph",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "notesInFlow": false,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "content": "## **Plotting data points vs sampling time:**\n- x-axis = data point\n- y-axis = sampling time",
+        "height": 704,
+        "width": 768,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        64,
+        -80
+      ],
+      "id": "0f6e0047-ecc0-436a-8890-4731714797fc",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        688,
+        384
+      ],
+      "id": "f58e6d67-7fde-436d-ad7b-592390598522",
+      "name": "Error merge"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        704,
+        192
+      ],
+      "id": "6248cb54-640c-40d9-9a2e-89b54b754b77",
+      "name": "Error merge1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5f97b3e8-9fbf-4159-8afe-b06d85a47e02",
+              "name": "Error Flag",
+              "value": "Cannot reach IOT HUB endpoint",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        432,
+        208
+      ],
+      "id": "772ca69c-1129-4f4a-b480-e1f99adc575d",
+      "name": "Error Flag"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5f97b3e8-9fbf-4159-8afe-b06d85a47e02",
+              "name": "Error Flag",
+              "value": "Cannot reach IOT HUB endpoint",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        432,
+        496
+      ],
+      "id": "feb04ba2-a81c-4c4e-8d29-66f8f6ded3d0",
+      "name": "Error Flag1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. Get the temperature from the previous node\nconst items = $input.all();\nconst temp = items[0].json.temperature || 0;\n\n// 2. Construct the configuration\nconst chartConfig = {\n  type: 'bar',\n  data: {\n    labels: ['Temp'],\n    datasets: [{\n      label: 'Scale',\n      data: [100], // The background bar always fills 100% of the scale\n      backgroundColor: `getGradientFillHelper('horizontal', ['green', 'yellow', 'orange', 'red'])`,\n    }]\n  },\n  options: {\n    indexAxis: 'y',\n    layout: { padding: { top: 10, bottom: 80, left: 40, right: 40 } },\n    scales: {\n      x: { display: false, min: 0, max: 100 },\n      y: { display: false }\n    },\n    plugins: {\n      legend: { display: false },\n      annotation: {\n        clip: false,\n        common: { drawTime: 'afterDraw' },\n        annotations: {\n          // Static Labels\n          low: { type: 'label', xValue: 5, content: ['Low'], font: { size: 14, weight: 'bold' } },\n          medium: { type: 'label', xValue: 50, content: ['Med'], font: { size: 14, weight: 'bold' } },\n          high: { type: 'label', xValue: 95, content: ['High'], font: { size: 14, weight: 'bold' } },\n          \n          // DYNAMIC ARROW: Positioned at the actual temperature\n          arrow: {\n            type: 'point',\n            pointStyle: 'triangle',\n            backgroundColor: '#000',\n            radius: 12,\n            xValue: temp, \n            yAdjust: 45, // Moves it below the bar\n          },\n          \n          // DYNAMIC LABEL: Shows the actual temperature value\n          score: {\n            type: 'label',\n            xValue: temp,\n            yAdjust: 75, // Moves it below the arrow\n            content: [`Temp: ${temp}°C`],\n            font: { size: 16, weight: 'bold' }\n          }\n        }\n      }\n    }\n  }\n};\n\n// 3. Stringify the config\nlet configString = JSON.stringify(chartConfig);\n\n// 4. IMPORTANT: QuickChart helper functions must be passed as strings, not as actual JS functions\n// We replace the quoted string with the raw function call\nconfigString = configString.replace(\n  `\"getGradientFillHelper('horizontal', ['green', 'yellow', 'orange', 'red'])\"`,\n  `getGradientFillHelper('horizontal', ['green', 'yellow', 'orange', 'red'])`\n);\n\n// 5. Generate URL (including the height 'h' parameter from your example)\nconst encodedConfig = encodeURIComponent(configString);\nconst url = `https://quickchart.io/chart?h=150&v=3&c=${encodedConfig}`;\n\nreturn { url };"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        384,
+        1104
+      ],
+      "id": "bb4fb84d-e4dd-49ee-849b-9956e6ab413d",
+      "name": "temperature gauge"
+    },
+    {
+      "parameters": {
+        "url": "https://sample-n8n.free.beeceptor.com/get-data1",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        144,
+        736
+      ],
+      "id": "f0292de3-7e1d-462a-85ba-3622b2f163fe",
+      "name": "Data for Donought Graph",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "url": "https://sample-n8n.free.beeceptor.com/get-data-temperature",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        128,
+        1104
+      ],
+      "id": "d15b3043-bb0b-49d3-8022-3cb9311faccf",
+      "name": "Temperature data",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "content": "## **Real time temperature pull from an IOT hub instrument:**\n- Gets a single temperature read out from the instrument and display them in a gauge\n",
+        "height": 432,
+        "width": 768,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        64,
+        992
+      ],
+      "id": "ae97c473-4f25-4a71-8bf0-ac2c04dee622",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5f97b3e8-9fbf-4159-8afe-b06d85a47e02",
+              "name": "Error Flag",
+              "value": "Cannot reach IOT HUB endpoint",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        384,
+        1264
+      ],
+      "id": "c7981ce1-4335-4966-bdb6-dfb4273d2daf",
+      "name": "Error Flag2"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        656,
+        1168
+      ],
+      "id": "68f874d5-74e4-4daf-881a-58076c97eb6d",
+      "name": "Error merge2"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5f97b3e8-9fbf-4159-8afe-b06d85a47e02",
+              "name": "Error Flag",
+              "value": "Cannot reach IOT HUB endpoint",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        416,
+        832
+      ],
+      "id": "6d183555-958a-4b1a-ab3f-3fcc0c1455ce",
+      "name": "Error Flag3"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        688,
+        768
+      ],
+      "id": "d8d1b8e0-05b5-4b81-896b-12101b38e326",
+      "name": "Error merge3"
+    },
+    {
+      "parameters": {
+        "content": "### **BAR GRAPH**",
+        "height": 80,
+        "width": 150,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        96,
+        272
+      ],
+      "id": "59f6bffe-1671-4b6f-8a6e-0c6e9ab41070",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "### **LINE CHART**",
+        "height": 80,
+        "width": 150,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        96,
+        544
+      ],
+      "id": "693fe642-7483-4c6d-9b6a-9fd877bbffc3",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "content": "# **Plotting tool for AI Agent:**",
+        "height": 80,
+        "width": 480
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        64,
+        -160
+      ],
+      "id": "3c7a4634-6a98-439a-8abe-6965fe134acf",
+      "name": "Sticky Note5"
+    },
+    {
+      "parameters": {
+        "content": "## **This is returned to the AI agent that uses this tool**"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1200,
+        384
+      ],
+      "id": "b25e8208-185c-4102-876f-4b68e83c7564",
+      "name": "Sticky Note6"
+    },
+    {
+      "parameters": {
+        "content": "### The data Endpoints used here returns MOCK DATA. Please change the urls to proper IOT Hub endpoints",
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -192,
+        0
+      ],
+      "id": "2c48032f-a48f-4228-a1d0-a8bc593b6860",
+      "name": "Sticky Note7"
+    }
+  ],
+  "pinData": {
+    "When clicking ‘Execute workflow’": [
+      {
+        "json": {
+          "type": "instrument"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "temperature": {
+      "main": [
+        [
+          {
+            "node": "Bar graph",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Data for Bar Graph",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Data for Line Graph",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Data for Donought Graph",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Temperature data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Bar graph": {
+      "main": [
+        [
+          {
+            "node": "Error merge1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Doughnut graph",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Line Graph": {
+      "main": [
+        [
+          {
+            "node": "Error merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Data for Line Graph": {
+      "main": [
+        [
+          {
+            "node": "Line Graph",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Error Flag1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Data for Bar Graph": {
+      "main": [
+        [
+          {
+            "node": "temperature",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Error Flag",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Doughnut graph": {
+      "main": [
+        [
+          {
+            "node": "Error merge3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Error merge": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Error merge1": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Error Flag": {
+      "main": [
+        [
+          {
+            "node": "Error merge1",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Error Flag1": {
+      "main": [
+        [
+          {
+            "node": "Error merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Data for Donought Graph": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Error Flag3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Temperature data": {
+      "main": [
+        [
+          {
+            "node": "temperature gauge",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Error Flag2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "temperature gauge": {
+      "main": [
+        [
+          {
+            "node": "Error merge2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Error Flag2": {
+      "main": [
+        [
+          {
+            "node": "Error merge2",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Error merge2": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    },
+    "Error Flag3": {
+      "main": [
+        [
+          {
+            "node": "Error merge3",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Error merge3": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "0be8969c-ef00-4fbc-857b-3b60ae6d38ee",
+  "meta": {
+    "instanceId": "66e3e231dbf1bb7dd12639ac581fd1deeaae5c3252b26c08c708b7d5ca003e11"
+  },
+  "id": "v61T420ArRxoTA5sD4SZb",
+  "tags": []
+}
