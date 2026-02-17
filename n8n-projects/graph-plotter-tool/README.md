@@ -60,3 +60,7 @@ We are looking to improve the scalability and reliability of this tool through t
 ## Screenshot of the workflow
 <img width="998" height="756" alt="image" src="https://github.com/user-attachments/assets/1ab11da2-8fd5-4b07-854e-b0442be9950c" />
 
+## Screenshot of the plotted graph from the returned URL
+<img width="1000" height="600" alt="image" src="https://github.com/user-attachments/assets/8d16c063-4f9e-4795-a094-9064d0d8ed28" />
+
+
