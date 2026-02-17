@@ -2,7 +2,8 @@
 
 An automated workflow for **n8n** that enables AI Agents to generate and display real-time instrument data as visual graphs directly within a chat interface.
 
-![Project Architecture](./image_7a9ce1.jpg)
+<img width="1641" height="798" alt="image" src="https://github.com/user-attachments/assets/31ad9342-3efe-4522-b007-9fc900f0b799" />
+
 
 ## 🚀 Project Overview
 
