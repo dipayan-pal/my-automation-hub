@@ -59,3 +59,10 @@ The project is built using **n8n** and utilizes the following components:
 
 ---
 
+## Screenshot
+<img width="1418" height="607" alt="image" src="https://github.com/user-attachments/assets/a0f0a87a-9443-4273-85b0-a276a2e8024a" />
+
+<img width="1420" height="559" alt="image" src="https://github.com/user-attachments/assets/3d30d680-0a3a-4580-916b-a52a0f62dd41" />
+
+---
+
