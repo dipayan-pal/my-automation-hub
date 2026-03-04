@@ -59,4 +59,3 @@ The project is built using **n8n** and utilizes the following components:
 
 ---
 
-*Developed with ❤️ using n8n and LangChain concepts.*
