@@ -1,0 +1,838 @@
+{
+  "name": "centextual retrieval",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        64,
+        1104
+      ],
+      "id": "7ae5b022-b092-41a8-b0e2-c79483d8af94",
+      "name": "When chat message received",
+      "webhookId": "28045bfb-3947-4446-b19b-19a7f4fec4b2"
+    },
+    {
+      "parameters": {
+        "content": "# **Document Ingestion**",
+        "height": 80,
+        "width": 1632,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "86925b15-cb21-4112-b8a0-285c5df63229",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "formTitle": "Add to Document store",
+        "formDescription": "Add files to document store for RAG",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Document",
+              "fieldType": "file"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.5,
+      "position": [
+        64,
+        224
+      ],
+      "id": "fa4f5bda-2a9e-4012-89bc-4a340edc5705",
+      "name": "Add files UI",
+      "webhookId": "e4d2d3ca-4e2e-476f-a4c9-0f48d00af98a"
+    },
+    {
+      "parameters": {
+        "operation": "text",
+        "binaryPropertyName": "Document",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        288,
+        128
+      ],
+      "id": "21ab53e9-af9c-4bef-a327-ea83b7d25486",
+      "name": "Extract text from file"
+    },
+    {
+      "parameters": {
+        "binaryData": true,
+        "binaryPropertyName": "Document",
+        "dataPropertyName": "hash"
+      },
+      "type": "n8n-nodes-base.crypto",
+      "typeVersion": 2,
+      "position": [
+        288,
+        320
+      ],
+      "id": "722d1ec7-5013-4153-bac5-791ed202e7ce",
+      "name": "Hash the file"
+    },
+    {
+      "parameters": {
+        "model": "llama-3.3-70b-versatile",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        928,
+        448
+      ],
+      "id": "2f837c24-fd03-4616-a768-c9d6610ed344",
+      "name": "Groq Chat Model2",
+      "credentials": {
+        "groqApi": {
+          "id": "7bm6wgcYabeXbe7K",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "392cc1be-aa6e-4df8-ac08-f71f13429373",
+              "name": "hash",
+              "value": "={{ $json.hash }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        512,
+        320
+      ],
+      "id": "862c58ea-7e9d-4565-a489-18731e490bd9",
+      "name": "hash"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e71d57fa-65ce-4870-b182-e7012301bdcd",
+              "name": "data",
+              "value": "={{ $json.data }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        512,
+        128
+      ],
+      "id": "6fcbf5d2-505f-4aa0-98f0-dedd7a07d253",
+      "name": "data"
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"type\": \"object\",\n  \"properties\": {\n    \"category\": {\n      \"type\": \"string\"\n    }\n  },\n  \"required\": [\"category\"],\n  \"additionalProperties\": false\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1120,
+        400
+      ],
+      "id": "e611acce-bf65-4723-af11-dfe1c70ff458",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": {
+          "__rl": true,
+          "value": "documents",
+          "mode": "list",
+          "cachedResultName": "documents"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        1296,
+        224
+      ],
+      "id": "283f6eb3-1630-4ec8-bf63-5966f968eedd",
+      "name": "Supabase Vector Store",
+      "credentials": {
+        "supabaseApi": {
+          "id": "ILKxP3flE5dmsIqa",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-embedding-001"
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1280,
+        560
+      ],
+      "id": "0925444b-5596-488d-a1f5-89b2164d6622",
+      "name": "Embeddings Google Gemini1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "Blws5utWChRmMCBR",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "textSplittingMode": "custom",
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "category",
+                "value": "={{ $json.output.category }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        1376,
+        416
+      ],
+      "id": "3ffa5dc2-6eff-4547-8a31-2d9adf529df2",
+      "name": "Default Data Loader"
+    },
+    {
+      "parameters": {
+        "chunkOverlap": 200,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        1472,
+        560
+      ],
+      "id": "77427bc1-5a53-4126-961b-628b8982f76a",
+      "name": "Recursive Character Text Splitter"
+    },
+    {
+      "parameters": {
+        "content": "",
+        "height": 768,
+        "width": 1632,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        80
+      ],
+      "id": "50d4a3c4-c90b-45a0-9de7-445b1e1777eb",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "**The hash value can be used later as a check for duplicates while implementing a file manager**",
+        "height": 96,
+        "color": "#EB0505"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        240,
+        480
+      ],
+      "id": "17b3a6d4-67c2-4dee-838a-a28f20a7ef34",
+      "name": "Sticky Note5"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        736,
+        224
+      ],
+      "id": "813d1165-40bb-40b0-8f1d-13d2a825e249",
+      "name": "document & hash"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.data }}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=You are an helpful AI assistant that reads user question and classify them into categories. The categories are :\n1. Technical \n2. Other random\n\n## Output format:\nplease output in this format:\n{\n  \"category\": \"Technical\"\n}"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        960,
+        224
+      ],
+      "id": "a122cf9f-3c62-4a8a-a413-0275085b7b21",
+      "name": "Category of the doc"
+    },
+    {
+      "parameters": {
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You are an AI assistant. Please rewrite the user prompt properly so that it can be send to a vector database. Just output the prompt and don't explain it"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        240,
+        1104
+      ],
+      "id": "1be76a98-6756-46aa-8b39-6b57027b030e",
+      "name": "Reformat user query for Vector DB1"
+    },
+    {
+      "parameters": {
+        "mode": "load",
+        "tableName": {
+          "__rl": true,
+          "value": "documents",
+          "mode": "list",
+          "cachedResultName": "documents"
+        },
+        "prompt": "={{ $('Reformat user query for Vector DB1').item.json.text }}",
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "file_id",
+                "value": "=1sOdt0mFuzxGJmhoRh9t8y8Ud57PayqHH"
+              }
+            ]
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        832,
+        976
+      ],
+      "id": "ebb352c1-4c56-41da-8fcc-b960d8e16482",
+      "name": "Search Supabase Vector Store1",
+      "credentials": {
+        "supabaseApi": {
+          "id": "ILKxP3flE5dmsIqa",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        256,
+        1312
+      ],
+      "id": "533baa8a-7702-4d6a-8beb-a0dabaf439b9",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "Blws5utWChRmMCBR",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-embedding-001"
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        864,
+        1152
+      ],
+      "id": "235170bb-5074-41bc-b411-37cfa131b500",
+      "name": "Embeddings Google Gemini2",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "Blws5utWChRmMCBR",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{   \n    \"category\": \"Technical\" \n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        768,
+        1328
+      ],
+      "id": "5c454454-5815-4db0-9720-d08b54cc424e",
+      "name": "Structured Output Parser1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.text }}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=## ROLE:\nYou are an helpful AI assistant that reads user question and classify them into categories. \n\n## INSTRUCTIONS:\nThe categories are : \n1. Technical  \n2. Other random  \n\n## Output format: \nplease output in this format: \n{   \n    \"category\": \"Technical\" \n}"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        512,
+        1104
+      ],
+      "id": "4c1141ca-ab70-4fec-af4b-bcd35cc96b34",
+      "name": "Question classification"
+    },
+    {
+      "parameters": {
+        "content": "# **Inference**",
+        "height": 80,
+        "width": 1632,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        848
+      ],
+      "id": "7fd4dea1-9170-452f-8094-a8214aa5b9d5",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "### **Steps:**\n- The question is fed into a classifier \n- The category is send as a metadata to the vector database retrival node ",
+        "height": 720,
+        "width": 1632,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        928
+      ],
+      "id": "0d350990-26b6-42c4-8271-ced9ad7ec57b",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Based on this information:\n{{ $json.pageContent }}\nAnswer the following question:\n{{ $('Reformat user query for Vector DB1').item.json.text }}",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        1296,
+        1120
+      ],
+      "id": "df68be1b-7a4c-4b1f-b3f9-4ccdddd43e7a",
+      "name": "Reformat user query for Vector DB"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1168,
+        1328
+      ],
+      "id": "208ad7a4-ff10-418f-8547-c202cc4389d0",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "Blws5utWChRmMCBR",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldsToAggregate": {
+          "fieldToAggregate": [
+            {
+              "fieldToAggregate": "document.pageContent"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        1104,
+        976
+      ],
+      "id": "f003070e-e10d-4886-a950-ca6b50191b17",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "content": "**Combine all the chuns from the Vector store into a single string that can be used as context for the LLM chain**",
+        "height": 96,
+        "color": "#EB0505"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1008,
+        1104
+      ],
+      "id": "02a9798f-c362-48d2-a06f-872f0ca8848d",
+      "name": "Sticky Note6"
+    },
+    {
+      "parameters": {
+        "content": "**Classification can be done based on the same categories that was used during data ingestion part**",
+        "height": 96,
+        "color": "#EB0505"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        496,
+        1232
+      ],
+      "id": "d194e99c-183c-42bb-8944-247c0b1a89bf",
+      "name": "Sticky Note7"
+    },
+    {
+      "parameters": {
+        "content": "**This llm gives the final answer and has all the proper chunks that are related to the user query**",
+        "height": 96,
+        "color": "#EB0505"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1360,
+        1232
+      ],
+      "id": "1ba90a88-27f4-42b7-b596-5aa878a32544",
+      "name": "Sticky Note8"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Reformat user query for Vector DB1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add files UI": {
+      "main": [
+        [
+          {
+            "node": "Extract text from file",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Hash the file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract text from file": {
+      "main": [
+        [
+          {
+            "node": "data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hash the file": {
+      "main": [
+        [
+          {
+            "node": "hash",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Category of the doc",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "hash": {
+      "main": [
+        [
+          {
+            "node": "document & hash",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "data": {
+      "main": [
+        [
+          {
+            "node": "document & hash",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Category of the doc",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Google Gemini1": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recursive Character Text Splitter": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "document & hash": {
+      "main": [
+        [
+          {
+            "node": "Category of the doc",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Category of the doc": {
+      "main": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reformat user query for Vector DB1": {
+      "main": [
+        [
+          {
+            "node": "Question classification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Reformat user query for Vector DB1",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Question classification",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Google Gemini2": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Search Supabase Vector Store1",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser1": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Question classification",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Question classification": {
+      "main": [
+        [
+          {
+            "node": "Search Supabase Vector Store1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Supabase Vector Store1": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Reformat user query for Vector DB",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Reformat user query for Vector DB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "49df4fad-f83f-4121-89b2-d0026334e6e8",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "3102343c2186fe7bafe3ce0d1e9a96905ce7129a814e5b6b5e91202782965e60"
+  },
+  "id": "cctclUtQ9rU2ChQk",
+  "tags": []
+}
