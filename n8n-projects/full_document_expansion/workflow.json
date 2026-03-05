@@ -1,0 +1,801 @@
+{
+  "name": "Context_Expansion_RAG",
+  "nodes": [
+    {
+      "parameters": {
+        "modelName": "models/gemini-embedding-001"
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -208,
+        224
+      ],
+      "id": "ca1f46e0-0080-4f4a-9cc2-4235cee044b4",
+      "name": "Embeddings Google Gemini",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "Blws5utWChRmMCBR",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "topN": 2
+      },
+      "type": "@n8n/n8n-nodes-langchain.rerankerCohere",
+      "typeVersion": 1,
+      "position": [
+        -32,
+        208
+      ],
+      "id": "d854d619-1913-4173-966e-da2d2ef17f8a",
+      "name": "Reranker Cohere",
+      "credentials": {
+        "cohereApi": {
+          "id": "w1LZKOJ4vzbRrz2l",
+          "name": "CohereApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -672,
+        16
+      ],
+      "id": "35742aa0-787f-4ad2-8c1b-3dabab42c0cf",
+      "name": "When chat message received",
+      "webhookId": "28045bfb-3947-4446-b19b-19a7f4fec4b2"
+    },
+    {
+      "parameters": {
+        "model": "llama-3.3-70b-versatile",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        -592,
+        224
+      ],
+      "id": "abfe5494-db01-42c4-b80b-53f01aea9c51",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "7bm6wgcYabeXbe7K",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "llama-3.3-70b-versatile",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        544,
+        208
+      ],
+      "id": "97c93b9e-c899-4197-853d-75207f5706e2",
+      "name": "Groq Chat Model1",
+      "credentials": {
+        "groqApi": {
+          "id": "7bm6wgcYabeXbe7K",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## **Steps:**\n- The user query is passed to an llm block\n- It modifies it for proper vector search \n- the Vector search returns TOP K results \n- The Top K result is send to Cohere re-ranker \n- Top 3 ranked docs are return -- these are the best chunks -- the top being the best (most relevant chunk) for the question asked\n- Based on the metadata.file_id of the best chunk an sql query is triggered \n- it loads in the entire doc related to the best chunk \n- it is aggregated and used in the context window for the final llm that answers the question",
+        "height": 624,
+        "width": 1632
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -720,
+        -272
+      ],
+      "id": "f5b76975-e08f-4b73-ba46-18d8d526b6f3",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You are an AI assistant. Please rewrite the user prompt properly so that it can be send to a vector database. Just output the prompt and don't explain it"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        -512,
+        16
+      ],
+      "id": "51ce27e8-5e4e-4226-8f46-e1a59d02b0ae",
+      "name": "Reformat user query for Vector DB"
+    },
+    {
+      "parameters": {
+        "mode": "load",
+        "tableName": {
+          "__rl": true,
+          "value": "documents",
+          "mode": "list",
+          "cachedResultName": "documents"
+        },
+        "prompt": "give me the address",
+        "topK": 5,
+        "useReranker": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        -176,
+        -48
+      ],
+      "id": "0bd5e50d-bcb6-4213-8b7f-e4c5b1ebb83c",
+      "name": "Search Supabase Vector Store",
+      "credentials": {
+        "supabaseApi": {
+          "id": "ILKxP3flE5dmsIqa",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "# **Full Document Expansion**",
+        "height": 80,
+        "width": 1632,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -720,
+        -352
+      ],
+      "id": "4a1c2cbe-63fa-42b1-b594-66ee7f081684",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "fieldsToAggregate": {
+          "fieldToAggregate": [
+            {
+              "fieldToAggregate": "content"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        336,
+        0
+      ],
+      "id": "5be2a6c6-47ff-4604-8fc9-0251d68d6c1d",
+      "name": "Aggregate the chunks"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT id, content \nFROM documents\nWHERE metadata->>'file_id'='{{ $json.document.metadata.file_id }}';",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        128,
+        0
+      ],
+      "id": "5b369e74-b492-4dfc-a6d5-1a3dffddfdd3",
+      "name": "SQL to get all the chunks",
+      "credentials": {
+        "postgres": {
+          "id": "D7yle7nQIjMhDGSc",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Based on this data: \n{{ $json.content }}\n\nAnswer the following question:\n{{ $('Reformat user query for Vector DB').item.json.text }}",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        576,
+        0
+      ],
+      "id": "3f22ce3a-a4c6-4f81-802d-7a7ba708c145",
+      "name": "Final Answer LLM"
+    },
+    {
+      "parameters": {
+        "content": "# **Document Ingestion**",
+        "height": 80,
+        "width": 1632,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -720,
+        464
+      ],
+      "id": "8169f5a0-5929-47c9-9b96-f02b14d3c32e",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "formTitle": "Add to Document store",
+        "formDescription": "Add files to document store for RAG",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Document",
+              "fieldType": "file"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.5,
+      "position": [
+        -656,
+        688
+      ],
+      "id": "9e7c6ba7-91ba-4d7f-bba7-e6c8f59b346e",
+      "name": "Add files UI",
+      "webhookId": "20b5509b-a6be-44f4-a54a-f4756e817cb6"
+    },
+    {
+      "parameters": {
+        "operation": "text",
+        "binaryPropertyName": "Document",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        -432,
+        592
+      ],
+      "id": "428f4124-a5e0-4c2f-8dcf-290d8e75ab97",
+      "name": "Extract text from file"
+    },
+    {
+      "parameters": {
+        "binaryData": true,
+        "binaryPropertyName": "Document",
+        "dataPropertyName": "hash"
+      },
+      "type": "n8n-nodes-base.crypto",
+      "typeVersion": 2,
+      "position": [
+        -432,
+        784
+      ],
+      "id": "59f26063-b0fd-4bd3-a131-f8d8e0c4b137",
+      "name": "Hash the file"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.data }}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=You are an helpful AI assistant that reads user question and classify them into categories. The categories are :\n1. Technical \n2. Other random\n\n## Output format:\nplease output in this format:\n{\n  \"category\": \"Technical\"\n}"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        240,
+        688
+      ],
+      "id": "f35c330f-b9f3-4827-8ed9-d202b3c8f250",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "model": "llama-3.3-70b-versatile",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        208,
+        912
+      ],
+      "id": "ad60a8b6-d4be-43bd-b545-76dfcf453d89",
+      "name": "Groq Chat Model2",
+      "credentials": {
+        "groqApi": {
+          "id": "7bm6wgcYabeXbe7K",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "392cc1be-aa6e-4df8-ac08-f71f13429373",
+              "name": "hash",
+              "value": "={{ $json.hash }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -208,
+        784
+      ],
+      "id": "dfb3cd7f-582b-4fa5-9aa3-dbd2571b7a1f",
+      "name": "hash"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e71d57fa-65ce-4870-b182-e7012301bdcd",
+              "name": "data",
+              "value": "={{ $json.data }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -208,
+        592
+      ],
+      "id": "3c40a8d2-fcdf-4167-b337-b4d61b0b1012",
+      "name": "data"
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"type\": \"object\",\n  \"properties\": {\n    \"category\": {\n      \"type\": \"string\"\n    }\n  },\n  \"required\": [\"category\"],\n  \"additionalProperties\": false\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        400,
+        864
+      ],
+      "id": "d3017021-376d-42eb-9cac-beb1a505652e",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": {
+          "__rl": true,
+          "value": "documents",
+          "mode": "list",
+          "cachedResultName": "documents"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        576,
+        688
+      ],
+      "id": "bf0a7f53-7c1d-4937-841e-bb23f26942e1",
+      "name": "Supabase Vector Store",
+      "credentials": {
+        "supabaseApi": {
+          "id": "ILKxP3flE5dmsIqa",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-embedding-001"
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        560,
+        1024
+      ],
+      "id": "54ce3058-d2b0-4df0-a25a-539bb6ea3fd2",
+      "name": "Embeddings Google Gemini1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "Blws5utWChRmMCBR",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "textSplittingMode": "custom",
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "category",
+                "value": "={{ $json.output.category }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        656,
+        880
+      ],
+      "id": "50d11849-c73e-4597-a4e0-a798aaaa9433",
+      "name": "Default Data Loader"
+    },
+    {
+      "parameters": {
+        "chunkOverlap": 200,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        752,
+        1024
+      ],
+      "id": "811886c2-f7f3-4031-9570-6896752e5502",
+      "name": "Recursive Character Text Splitter"
+    },
+    {
+      "parameters": {
+        "content": "",
+        "height": 768,
+        "width": 1632,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -720,
+        544
+      ],
+      "id": "c998ac1f-005b-4b00-8162-9c5946bfac24",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "**Reconstructing the entire document by adding up all the chunks**",
+        "height": 80,
+        "color": "#EB0505"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        272,
+        160
+      ],
+      "id": "55c727b6-d9e7-4f0b-b1d5-954830487436",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "content": "**The hash value can be used later as a check for duplicates while implementing a file manager**",
+        "height": 96,
+        "color": "#EB0505"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -480,
+        944
+      ],
+      "id": "5d8c7f0e-dee2-4e32-a7ea-2750869f485c",
+      "name": "Sticky Note5"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        16,
+        688
+      ],
+      "id": "5ab1278d-22cd-468e-9862-d505a4baf2dc",
+      "name": "document & hash"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Embeddings Google Gemini": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Search Supabase Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reranker Cohere": {
+      "ai_reranker": [
+        [
+          {
+            "node": "Search Supabase Vector Store",
+            "type": "ai_reranker",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Reformat user query for Vector DB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Reformat user query for Vector DB",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Final Answer LLM",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reformat user query for Vector DB": {
+      "main": [
+        [
+          {
+            "node": "Search Supabase Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Supabase Vector Store": {
+      "main": [
+        [
+          {
+            "node": "SQL to get all the chunks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate the chunks": {
+      "main": [
+        [
+          {
+            "node": "Final Answer LLM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SQL to get all the chunks": {
+      "main": [
+        [
+          {
+            "node": "Aggregate the chunks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add files UI": {
+      "main": [
+        [
+          {
+            "node": "Extract text from file",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Hash the file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract text from file": {
+      "main": [
+        [
+          {
+            "node": "data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hash the file": {
+      "main": [
+        [
+          {
+            "node": "hash",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "data": {
+      "main": [
+        [
+          {
+            "node": "document & hash",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "hash": {
+      "main": [
+        [
+          {
+            "node": "document & hash",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Google Gemini1": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recursive Character Text Splitter": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "document & hash": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "3119fc86-9dbd-4dcf-8e5a-c194e3d4bfaf",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "3102343c2186fe7bafe3ce0d1e9a96905ce7129a814e5b6b5e91202782965e60"
+  },
+  "id": "JoPw86Ct4yjGF1Ym",
+  "tags": []
+}
