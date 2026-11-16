@@ -1,0 +1,850 @@
+{
+  "name": "SQS Main Workflow (template)",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Setup checklist\n1. Select your AWS credential on both HTTP nodes\n2. Set queueUrl in the Config node\n3. Pick your Data Table (column: messageId, string) on the two lookup nodes and the Record node\n4. Replace the AI Classifier placeholder; keep categories on an allowlist\n5. Select your sub-workflows in the three Run nodes (their trigger must be 'Execute Workflow Trigger')\n6. Sub-workflow failure paths must end in a Stop and Error node\n7. Queue visibility timeout must exceed your slowest sub-workflow",
+        "height": 260,
+        "width": 520
+      },
+      "id": "30c5b56a-4c7b-4eed-9a74-2f3c4b554d44",
+      "name": "Setup Notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -96,
+        -128
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 1
+            }
+          ]
+        }
+      },
+      "id": "f4f92f22-db46-4edd-a7b5-ba257ec577c9",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -96,
+        256
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b2000000-0000-4000-8000-000000000001",
+              "name": "queueUrl",
+              "value": "https://sqs.us-east-1.amazonaws.com/<account-id>/<queue-name>",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "95f15dbe-d018-4c9b-8db1-2521c9434824",
+      "name": "Config",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        128,
+        256
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://sqs.us-east-1.amazonaws.com/",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "aws",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Amz-Target",
+              "value": "AmazonSQS.ReceiveMessage"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/x-amz-json-1.0"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ QueueUrl: $('Config').first().json.queueUrl, MaxNumberOfMessages: 10, WaitTimeSeconds: 10, VisibilityTimeout: 300 }) }}",
+        "options": {}
+      },
+      "id": "1cfc1735-1296-4249-9b6e-f77c47719c37",
+      "name": "Receive Message",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        352,
+        256
+      ],
+      "executeOnce": true,
+      "credentials": {
+        "aws": {
+          "id": "5tdsyLzms8LvG0TO",
+          "name": "AWS (IAM) account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// SQS JSON-protocol responses arrive as a string under `data`\nconst first = $input.first().json;\nconst raw = first.data;\nconst parsed = (typeof raw === 'string' && raw.length)\n  ? JSON.parse(raw)\n  : (raw && typeof raw === 'object' ? raw : first);\n\nconst messages = parsed.Messages || [];\n\n// Empty array = queue is empty, this branch simply ends\nreturn messages.map(m => {\n  let body = m.Body;\n  try { body = JSON.parse(m.Body); } catch (e) {}\n  return {\n    json: {\n      messageId: m.MessageId,\n      receiptHandle: m.ReceiptHandle,\n      body\n    }\n  };\n});"
+      },
+      "id": "e03b895a-d03a-48ef-8226-ab3362b700ca",
+      "name": "Extract Raw Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        576,
+        256
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "rowExists",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "messageId",
+              "keyValue": "={{ $json.messageId }}"
+            }
+          ]
+        }
+      },
+      "id": "d30d0f67-6bad-4570-8c41-e3eb84c0dd40",
+      "name": "Already Processed",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1,
+      "position": [
+        912,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "rowNotExists",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "messageId",
+              "keyValue": "={{ $json.messageId }}"
+            }
+          ]
+        }
+      },
+      "id": "83724cdd-9826-4c4b-aff0-10ec1696c8a9",
+      "name": "New Message",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1,
+      "position": [
+        912,
+        384
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "c3000000-0000-4000-8000-000000000001",
+                    "leftValue": "={{ $json.output.category }}",
+                    "rightValue": "category_a",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "category_a"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "c3000000-0000-4000-8000-000000000002",
+                    "leftValue": "={{ $json.category }}",
+                    "rightValue": "category_b",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "category_b"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "c3000000-0000-4000-8000-000000000003",
+                    "leftValue": "={{ $json.category }}",
+                    "rightValue": "category_c",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "category_c"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "id": "4a394423-a82c-4bf2-abad-141439612d87",
+      "name": "Route by Category",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        1872,
+        624
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "mode": "each",
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "8bd5c21f-91a7-4e3f-a72c-3bb13e06c5e5",
+      "name": "Run Sub-workflow A",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        2176,
+        336
+      ],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "mode": "each",
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "022925bb-120f-4c60-8b42-0880a84eab8c",
+      "name": "Run Sub-workflow B",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        2176,
+        512
+      ],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "mode": "each",
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "5e48ae52-bb64-4ddc-8839-d3de57cb08db",
+      "name": "Run Sub-workflow C",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        2176,
+        688
+      ],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "errorMessage": "Unknown category from classifier - message left in queue for retry / DLQ"
+      },
+      "id": "2517f510-77ce-492d-971e-6f4fa7e7ed6e",
+      "name": "Unknown Category",
+      "type": "n8n-nodes-base.stopAndError",
+      "typeVersion": 1,
+      "position": [
+        2176,
+        864
+      ]
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "messageId": "={{ $('Extract Raw Data').item.json.messageId }}"
+          },
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "27a999f8-20a2-49da-8fb5-3f50d7899919",
+      "name": "Record Message ID",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1,
+      "position": [
+        2432,
+        448
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://sqs.us-east-1.amazonaws.com/",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "aws",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Amz-Target",
+              "value": "AmazonSQS.DeleteMessage"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/x-amz-json-1.0"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ QueueUrl: $('Config').first().json.queueUrl, ReceiptHandle: $('Extract Raw Data').item.json.receiptHandle }) }}",
+        "options": {}
+      },
+      "id": "4d731df0-5433-4267-b6ea-531bd3e6b441",
+      "name": "Delete Message",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2688,
+        64
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Add your SQS URL\nThis will be the full ARN for SQS service can be found in the SQS -> your queue page",
+        "height": 112,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        32,
+        416
+      ],
+      "id": "62957e9e-78e4-4082-81bc-c55133118902",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## HTTP Call to SQS service\nSet headers, body and creds",
+        "height": 112,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        288,
+        416
+      ],
+      "id": "d7f526b7-1f28-404f-a175-93ef926dffd5",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "We extract the message_id, receive_handle and the message_body",
+        "height": 112,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        544,
+        416
+      ],
+      "id": "2f33806b-aca9-458f-855a-715190d9dacf",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "### Check if the message is a duplicate\n- check message-id in a table\n- if it exists, close the workflow and delete the message \n- if not, continue with the workflow \n- only after succesful execution of sub-workflow, we delete the message",
+        "height": 528,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        832,
+        0
+      ],
+      "id": "8dfc7352-de8b-46cc-81bb-024437030ec6",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "text": "<change this to the message body that you get from the previous node>",
+        "guardrails": {
+          "keywords": "forget, "
+        },
+        "customizeSystemMessage": true
+      },
+      "type": "@n8n/n8n-nodes-langchain.guardrails",
+      "typeVersion": 2,
+      "position": [
+        1152,
+        384
+      ],
+      "id": "4adb4713-35b9-4f34-85e0-32ff51e4bd02",
+      "name": "Guardrails"
+    },
+    {
+      "parameters": {
+        "errorMessage": "Not safe content detected"
+      },
+      "type": "n8n-nodes-base.stopAndError",
+      "typeVersion": 1,
+      "position": [
+        1392,
+        288
+      ],
+      "id": "e6e3d4a0-a909-40ac-a73a-ee49a566935e",
+      "name": "Stop and Error"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "<message_body>",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "## ROLE\nYou are an AI text classifier\n\n## INSTRUCTION\n\nTry to understand the following text and classify them into the following categories\n- category_a\n- category_b\n- category_c\n\nPlease use the specific output parser for result\n\n"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        1424,
+        656
+      ],
+      "id": "31b0c0b2-73e0-4222-a958-b46faa1e1dc9",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n\t\"category\": \"catefory_a\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1616,
+        864
+      ],
+      "id": "9d8146a0-59a2-40fd-82d0-6dea031f377c",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-5-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        1424,
+        864
+      ],
+      "id": "dce20ed6-09ea-47e8-a822-07f53dfd719d",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "2qZSs0vFbQBZ0PBx",
+          "name": "kodekloud"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Check Data Table",
+        "height": 80,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        832,
+        -80
+      ],
+      "id": "27e21c79-a75f-4fad-ba5d-48f4f30dbd08",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "content": "## Classification  & Routing\n- The message body is checked for semantic understanding\n- Based on that, the message is classified \n- If data privacy is a concern then use a locally/on-prem LLM classifier which can be accessed over the internet\n- The classifier uses structured output that can be used by the switch node to properly route to downstream nodes ",
+        "height": 576,
+        "width": 768,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1344,
+        432
+      ],
+      "id": "eaf29c14-d9ba-4a76-af3d-ff9db114bd5f",
+      "name": "Sticky Note5"
+    },
+    {
+      "parameters": {
+        "content": "## Handling sub-workflow errors\n- Only delete messages after the subwork has returned after succesfull run\n- On error, in the sub-workflow, we use the stop and error node, which we can track in the main workflow via the error branch\n- Handle this error as required ",
+        "height": 144,
+        "width": 576,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2400,
+        608
+      ],
+      "id": "37d30b75-7477-484b-87de-16f144cc8ea7",
+      "name": "Sticky Note6"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "{\n  \"category\": \"{{ $json.output.category }}\",\n  \"body\": \"{{ $('Extract Raw Data').item.json.body }}\",\n  \"MessageId\": \"{{ $('Extract Raw Data').item.json.messageId }}\"\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1712,
+        656
+      ],
+      "id": "29c05f60-4c10-4a12-909b-535e204a5fa8",
+      "name": "Combine all data"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Config": {
+      "main": [
+        [
+          {
+            "node": "Receive Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Receive Message": {
+      "main": [
+        [
+          {
+            "node": "Extract Raw Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Raw Data": {
+      "main": [
+        [
+          {
+            "node": "Already Processed",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "New Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Already Processed": {
+      "main": [
+        [
+          {
+            "node": "Delete Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "New Message": {
+      "main": [
+        [
+          {
+            "node": "Guardrails",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by Category": {
+      "main": [
+        [
+          {
+            "node": "Run Sub-workflow A",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Run Sub-workflow B",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Run Sub-workflow C",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Unknown Category",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run Sub-workflow A": {
+      "main": [
+        [
+          {
+            "node": "Record Message ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run Sub-workflow B": {
+      "main": [
+        [
+          {
+            "node": "Record Message ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run Sub-workflow C": {
+      "main": [
+        [
+          {
+            "node": "Record Message ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Record Message ID": {
+      "main": [
+        [
+          {
+            "node": "Delete Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete Message": {
+      "main": [
+        [
+          {
+            "node": "Receive Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Guardrails": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Stop and Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Combine all data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Combine all data": {
+      "main": [
+        [
+          {
+            "node": "Route by Category",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "4e869608-0d47-42ed-93d4-c46755e9f440",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "823d1e2bdf67bdc832dd7d317907accb6537d01967b058b8475f700088e9a455"
+  },
+  "nodeGroups": [],
+  "id": "e45y7222jQ1348qw",
+  "tags": []
+}
