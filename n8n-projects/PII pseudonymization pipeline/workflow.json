@@ -1,0 +1,876 @@
+{
+  "name": "PII_checker",
+  "nodes": [
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"PII\": true,\n  \"list\": [\n    {\n      \"value\": \"Patrick\",\n      \"type\": \"PERSON\"\n    },\n    {\n      \"value\": \"someemailforpatrick@mail.com\",\n      \"type\": \"EMAIL\"\n    }\n  ]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -272,
+        208
+      ],
+      "id": "f38ed779-86f4-48fd-8fb3-64847f02c90c",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "bae313d8-cf6e-41aa-913b-f674affe6372",
+              "leftValue": "={{ $json.output.PII }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -32,
+        0
+      ],
+      "id": "65af42ff-2644-405f-a52e-9e183971c372",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "content": "## PII Checker\n**-These nodes checks if the entered text contains any personall identifiable information**\n**-PII data never leaves on premise infrastructure**",
+        "height": 464,
+        "width": 3812,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -976,
+        -112
+      ],
+      "id": "b040b215-723c-47c2-adaf-44a8a1c38e91",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.data }}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You are a PII (Personally Identifiable Information) detection and extraction assistant.  Your task is to identify and extract all Personally Identifiable Information (PII) present in the user's input text.  Follow these rules strictly:  1. Identify all occurrences of PII in the input. 2. Extract the exact original text without modifying its spelling, capitalization, or formatting. 3. Assign an appropriate category to each extracted value. 4. Return the extracted values as an array of objects, each containing:    - \"value\": The exact extracted PII string.    - \"type\": The PII category.  Supported PII categories: - PERSON: Full names, first names, and last names. - EMAIL: Email addresses. - PHONE: Phone numbers. - ADDRESS: Residential or business addresses. - DATE_OF_BIRTH: Birth dates. - GOVERNMENT_ID: Government-issued identification numbers. - FINANCIAL: Bank account numbers, credit card numbers, and other financial identifiers. - IP_ADDRESS: IPv4 or IPv6 addresses. - OTHER: Any other identifiable personal information.  Output requirements:  1. If PII is detected, set \"PII\" to true and populate the \"list\" array. 2. If no PII is detected, set \"PII\" to false and return an empty \"list\" array. 3. Do not invent, infer, or fabricate PII. 4. Do not include duplicate values in the list. 5. Do not include explanations, comments, Markdown, or additional fields. 6. Return only valid JSON matching the required output structure.  Always preserve the exact original PII value."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        -400,
+        0
+      ],
+      "id": "202ce848-84ba-4a06-8de6-8baf86fb7507",
+      "name": "LLM checks for PII locally"
+    },
+    {
+      "parameters": {
+        "operation": "text",
+        "binaryPropertyName": "File",
+        "options": {
+          "encoding": "utf8"
+        }
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        -672,
+        192
+      ],
+      "id": "42587489-9f96-40a0-8661-c3752c7f923c",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "formTitle": "File Uploader",
+        "formDescription": "Only text files supported (.txt)",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "File",
+              "fieldType": "file",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        -896,
+        192
+      ],
+      "id": "66c2f502-5c08-43f6-8beb-f0c1a36cd5ce",
+      "name": "Get input from File",
+      "webhookId": "34cbbe46-76d3-4714-a7a6-464d8688ded5"
+    },
+    {
+      "parameters": {
+        "formTitle": "Sample Text ",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Enter your text",
+              "fieldType": "textarea"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        -896,
+        0
+      ],
+      "id": "1ab5037b-ab93-4663-8739-89c12952f7bf",
+      "name": "Get input from text",
+      "webhookId": "dc079c8e-d78b-4553-81e4-4b43d57c15e9",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "PII",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        400,
+        -16
+      ],
+      "id": "4ce734e6-8d97-420c-af97-4e440cd253b7",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "nvidia/nemotron-3-nano-4b",
+          "mode": "list",
+          "cachedResultName": "nvidia/nemotron-3-nano-4b"
+        },
+        "responsesApiEnabled": false,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -448,
+        208
+      ],
+      "id": "90ad7bbf-d661-4fc2-ab3d-2b3ab0956e9f",
+      "name": "LM Studio hosted model",
+      "credentials": {
+        "openAiApi": {
+          "id": "zGcROH5L0twbOCGQ",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "Expects TEXT FILE input",
+        "height": 80,
+        "width": 150,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -688,
+        96
+      ],
+      "id": "7da948de-570f-452c-87ca-99fe0581b5ad",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const counters = {};\n\nreturn $input.all().map(item => {\n  const { value, type } = item.json;\n\n  counters[type] = (counters[type] || 0) + 1;\n\n  const number = String(counters[type]).padStart(3, '0');\n\n  return {\n    json: {\n      value,\n      type,\n      placeholder: `[${type}_${number}]`\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        608,
+        -16
+      ],
+      "id": "f99fa3a9-9444-4fb8-801c-cca920f1d10f",
+      "name": "get per session PII count"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "deepseek/deepseek-v4-flash",
+          "mode": "list",
+          "cachedResultName": "deepseek/deepseek-v4-flash"
+        },
+        "responsesApiEnabled": false,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        1712,
+        160
+      ],
+      "id": "c526343a-fe83-4066-bf4f-35b18f3e4d23",
+      "name": "cloud model deep-seek",
+      "credentials": {
+        "openAiApi": {
+          "id": "2qZSs0vFbQBZ0PBx",
+          "name": "kodekloud"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "##  Cloud Model\n- Sending redacted data to the cloud LLM ",
+        "height": 432,
+        "width": 454,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1632,
+        -96
+      ],
+      "id": "e562d1bd-90ef-4734-97fc-66b038b7811a",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst originalText = $('Extract from File').first().json.data;\n\n// Get plaintext mappings from Generate Placeholders\nconst mappings = $('Generate Placeholders').all();\n\n// Keep only valid mappings\nconst validMappings = mappings.filter(item =>\n  typeof item.json.value === 'string' &&\n  item.json.value.length > 0 &&\n  typeof item.json.placeholder === 'string'\n);\n\n// Work on a copy of the original text\nlet redactedText = originalText;\n\n// Sort by original value length (longest first)\nconst sortedMappings = [...validMappings].sort((a, b) =>\n  b.json.value.length - a.json.value.length\n);\n\n// Replace original PII with placeholders\nfor (const item of sortedMappings) {\n  const { value, placeholder } = item.json;\n\n  redactedText = redactedText.split(value).join(placeholder);\n}\n\nreturn [\n  {\n    json: {\n      session_id: validMappings[0]?.json.session_id ?? null,\n      original_text: originalText,\n      redacted_text: redactedText\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1472,
+        -16
+      ],
+      "id": "ec2f640e-1edc-47cb-adee-8069c482a7d7",
+      "name": "replace original text with redacted values"
+    },
+    {
+      "parameters": {
+        "jsCode": "\n// Get decrypted mappings from the Crypto Decrypt node\nconst mappings = $input.all();\n\n// Get the cloud LLM response\nconst llmResponse = $('Cloud LLM').first().json.text;\n\n// Sort mappings by placeholder length (longest first)\nconst sortedMappings = [...mappings].sort((a, b) =>\n  b.json.placeholder.length - a.json.placeholder.length\n);\n\n// Start with the cloud LLM response\nlet reconstructedText = llmResponse;\n\n// Replace placeholders with their decrypted original values\nfor (const item of sortedMappings) {\n  const { placeholder, original_value } = item.json;\n\n  if (\n    typeof placeholder !== 'string' ||\n    typeof original_value !== 'string'\n  ) {\n    continue;\n  }\n\n  reconstructedText = reconstructedText\n    .split(placeholder)\n    .join(original_value);\n}\n\n// Return reconstructed response\nreturn [\n  {\n    json: {\n      session_id: mappings[0]?.json.session_id ?? null,\n      reconstructed_text: reconstructedText\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2640,
+        -16
+      ],
+      "id": "80352459-dfad-4492-8c88-87ae9e35d2b6",
+      "name": "re-identification node"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.redacted_text }}",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You are an AI assistant that receives redacted text from a backend server. You job is to understand the text and return a text with the information that you have understood"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        1776,
+        -16
+      ],
+      "id": "5310e955-dc7e-4990-9420-794bcb4bae12",
+      "name": "Cloud LLM"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "11b39d2d-ab3e-4fe9-b0dc-b93161035e69",
+              "name": "session_id",
+              "value": "={{ $execution.id }}",
+              "type": "string"
+            },
+            {
+              "id": "01a3cd38-3b0c-4112-9e7d-5d89ad6e8149",
+              "name": "value",
+              "value": "={{ $json.value }}",
+              "type": "string"
+            },
+            {
+              "id": "ac218b9b-a10e-4eeb-95b3-0f20f108b925",
+              "name": "type",
+              "value": "={{ $json.type }}",
+              "type": "string"
+            },
+            {
+              "id": "5e8bd380-5105-4bb8-9f60-4a464261237a",
+              "name": "placeholder",
+              "value": "={{ $json.placeholder }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        832,
+        -16
+      ],
+      "id": "215ba5db-c221-44e7-bd6f-06f25fc5e806",
+      "name": "Generate Placeholders"
+    },
+    {
+      "parameters": {
+        "action": "decrypt",
+        "value": "={{ $json.original_value }}",
+        "dataPropertyName": "original_value"
+      },
+      "type": "n8n-nodes-base.crypto",
+      "typeVersion": 2,
+      "position": [
+        2384,
+        -16
+      ],
+      "id": "499413b6-15e3-4e4f-9adf-66749fa253f0",
+      "name": "Decrypt_node",
+      "credentials": {
+        "crypto": {
+          "id": "DcIB8wM5TM7L32xb",
+          "name": "Crypto account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "38185ac5-7845-481c-a2a2-824241fbd809",
+              "name": "PII",
+              "value": "={{ $json.output.list }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        224,
+        -16
+      ],
+      "id": "489531f1-e226-4330-8b3f-af16efc482e1",
+      "name": "Extract PII"
+    },
+    {
+      "parameters": {
+        "action": "encrypt",
+        "value": "={{ $json.value }}",
+        "dataPropertyName": "original_value"
+      },
+      "type": "n8n-nodes-base.crypto",
+      "typeVersion": 2,
+      "position": [
+        1056,
+        -16
+      ],
+      "id": "c1b27f13-e346-41c8-a0a0-01d5062b392f",
+      "name": "Encrypt_node",
+      "credentials": {
+        "crypto": {
+          "id": "DcIB8wM5TM7L32xb",
+          "name": "Crypto account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "pii_mapping",
+          "mode": "list",
+          "cachedResultName": "pii_mapping"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "session_id": "={{ $json.session_id }}",
+            "original_value": "={{ $json.original_value }}",
+            "pii_type": "={{ $json.type }}",
+            "placeholder": "={{ $json.placeholder }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "session_id",
+              "displayName": "session_id",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "original_value",
+              "displayName": "original_value",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "pii_type",
+              "displayName": "pii_type",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "placeholder",
+              "displayName": "placeholder",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        1264,
+        -16
+      ],
+      "id": "22403d53-e5ef-4e7a-bd64-7310adecbde9",
+      "name": "push redacted data into DB",
+      "credentials": {
+        "postgres": {
+          "id": "7PYql04SF1pS9cvS",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "# PII pseudonymization pipeline",
+        "height": 80,
+        "width": 512,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -976,
+        -192
+      ],
+      "id": "18424f54-5eb5-4fbc-9e19-7d2bd924bfd9",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "CREATE TABLE IF NOT EXISTS pii_mapping (\n    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,\n\n    session_id TEXT NOT NULL,\n\n    original_value TEXT NOT NULL,\n\n    pii_type TEXT NOT NULL,\n\n    placeholder TEXT NOT NULL,\n\n    created_at TIMESTAMPTZ DEFAULT NOW(),\n\n    UNIQUE (session_id, placeholder)\n);\n\nCREATE INDEX idx_pii_session\nON pii_mapping(session_id);",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        -912,
+        400
+      ],
+      "id": "5f96d7ea-fb65-4646-b607-ed694decc124",
+      "name": "creates the pii_mapping table",
+      "credentials": {
+        "postgres": {
+          "id": "7PYql04SF1pS9cvS",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "pii_mapping",
+          "mode": "list",
+          "cachedResultName": "pii_mapping"
+        },
+        "where": {
+          "values": [
+            {
+              "column": "session_id",
+              "value": "={{ $('Generate Placeholders').item.json.session_id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        2144,
+        -16
+      ],
+      "id": "fae1cc74-a4b2-43a4-baf2-28b4b54e838a",
+      "name": "get mapping data from DB",
+      "credentials": {
+        "postgres": {
+          "id": "7PYql04SF1pS9cvS",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "- In this intance we are storing the encryption pass phrase in N8N creds.\n- In future AWS Secrets Manager can be used to store it.\n- Further features like key rotation and versioning can also be implemented",
+        "width": 528,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        784,
+        160
+      ],
+      "id": "0b8d9b93-70bd-48b9-b41b-547491f73610",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        224,
+        208
+      ],
+      "id": "cbfac201-8ee6-41e2-bbef-bf971998a198",
+      "name": "Handle this"
+    },
+    {
+      "parameters": {
+        "content": "No PII data to redact",
+        "height": 192,
+        "width": 160,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        192,
+        144
+      ],
+      "id": "967e958d-2150-4158-81da-2d9a55c362b6",
+      "name": "Sticky Note5"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "LLM checks for PII locally",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LLM checks for PII locally": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "LLM checks for PII locally",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get input from File": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get input from text": {
+      "main": [
+        [
+          {
+            "node": "LLM checks for PII locally",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Extract PII",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Handle this",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "get per session PII count",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LM Studio hosted model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "LLM checks for PII locally",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get per session PII count": {
+      "main": [
+        [
+          {
+            "node": "Generate Placeholders",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "cloud model deep-seek": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Cloud LLM",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "replace original text with redacted values": {
+      "main": [
+        [
+          {
+            "node": "Cloud LLM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cloud LLM": {
+      "main": [
+        [
+          {
+            "node": "get mapping data from DB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "re-identification node": {
+      "main": [
+        []
+      ]
+    },
+    "Generate Placeholders": {
+      "main": [
+        [
+          {
+            "node": "Encrypt_node",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract PII": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Encrypt_node": {
+      "main": [
+        [
+          {
+            "node": "push redacted data into DB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "push redacted data into DB": {
+      "main": [
+        [
+          {
+            "node": "replace original text with redacted values",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Decrypt_node": {
+      "main": [
+        [
+          {
+            "node": "re-identification node",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get mapping data from DB": {
+      "main": [
+        [
+          {
+            "node": "Decrypt_node",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "timezone": "Asia/Kolkata",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "dea778f1-9b08-457e-97f1-fb7333fe17bf",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "823d1e2bdf67bdc832dd7d317907accb6537d01967b058b8475f700088e9a455"
+  },
+  "nodeGroups": [],
+  "id": "4kSHcmLppxFXN2Os",
+  "tags": []
+}
